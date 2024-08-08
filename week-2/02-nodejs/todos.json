@@ -1,1 +1,81 @@
-[]
+const express = require("express");
+const { v4: uuidv4 } = require("uuid"); // To generate unique IDs
+const app = express();
+app.use(express.json());
+
+let todo = [];
+
+app.get("/", function (req, res) {
+  res.status(200).json(todo);
+});
+
+app.post("/", function (req, res) {
+  const { title, completed, description } = req.body;
+
+  if (!title || !description) {
+    return res.status(400).json("Please put the description and title");
+  }
+
+  const newTodos = {
+    id: uuidv4(),
+    title: title,
+    description: description,
+    completed: completed,
+  };
+
+  todo.push(newTodos);
+
+  res.status(201).json({ id: newTodos.id });
+});
+
+/* PUT /todos/:id - Update an existing todo item by ID
+    Description: Updates an existing todo item identified by its ID.
+    Request Body: JSON object representing the updated todo item.
+    Response: 200 OK if the todo item was found and updated, or 404 Not Found if not found.
+    Example: PUT http://localhost:3000/todos/123
+    Request Body: { "title": "Buy groceries", "completed": true }
+  */
+
+app.put("/todos/:id", function (req, res) {
+  const { id } = req.params;
+  const { title, completed, description } = req.body;
+  // Find the todo item by ID
+  const todoIndex = todo.findIndex((item) => item.id === id);
+
+  if (todoIndex === -1) {
+    return res.status(404).json({ error: "Todo item not found" });
+  }
+
+  if (title != undefined) {
+    todo[todoIndex].title = title;
+  }
+
+  if (description != undefined) {
+    todo[todoIndex].description = description;
+  }
+
+  if (completed != undefined) {
+    todo[todoIndex].completed = completed;
+  }
+
+  res.status(200).json(todo[todoIndex]);
+});
+
+// DELETE /todos/:id - Delete a todo item by ID
+app.delete("/todos/:id", function (req, res) {
+  const { id } = req.params;
+
+  // Find the index of the todo item by ID
+  const todoIndex = todo.findIndex((item) => item.id === id);
+
+  if (todoIndex === -1) {
+    return res.status(404).json({ error: "Todo item not found" });
+  }
+
+  // Remove the todo item from the array
+  todo.splice(todoIndex, 1);
+
+  res.status(200).json({ message: "Todo item deleted successfully" });
+});
+
+app.listen(3001);
